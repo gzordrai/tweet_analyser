@@ -1,12 +1,9 @@
-from fastapi import FastAPI
-from api import testing_api,training_api
+from dataset import Dataset
+from classifier import Classifier, KNNClassifier
+from os import getcwd
+from os.path import join
 
-app=FastAPI()
-
-app.include_router(training_api.router, prefix='/train_ml')
-app.include_router(testing_api.router, prefix='/test_ml')
-
-
-
-
-
+if __name__ == "__main__":
+    path: str = join(getcwd(), "datasets/inputs/training.1600000.processed.noemoticon.csv")
+    classifier: Classifier = KNNClassifier(10)
+    dataset: Dataset = Dataset(path, classifier)
