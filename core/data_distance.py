@@ -1,22 +1,23 @@
 from abc import ABC, abstractmethod
 
 class DistanceStrategy(ABC):
-    def __init__(self, data: str) -> None:
-        pass
-
     @abstractmethod
     def distance(self, source, target) -> int:
         pass
 
 class WordOverlapDistance(DistanceStrategy):
     def distance(self, source, target) -> int:
-        data: str = target.get_data()
-        i, j = len(data.split(' ')), 0
+        s: str = source.get_data().split(' ')
+        t: str = target.get_data().split(' ')
+        total_words: int = len(s) + len(t)
+        common_words: int  = 0
 
         for word in source.get_data().split(' '):
-            i += 1
+            if word in target.get_data():
+                common_words += 1
 
-            if word in data:
-                j += 1
+        for word in target.get_data().split(' '):
+            if word in source.get_data():
+                common_words += 1
 
-        return (i - j) / i
+        return (total_words - common_words) / total_words
