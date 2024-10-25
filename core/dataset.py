@@ -1,52 +1,95 @@
+from abc import ABC, abstractmethod
 from classifier import Classifier
-from csv import DictReader
+from csv import reader
 from os.path import exists
 from random import shuffle
-from core.data import Data
+from data import Data
 
-class Dataset():
+class Dataset(ABC):
     def __init__(self, path: str, classifier: Classifier) -> None:
-        self.__path: str = path
-        self.__classifier: Classifier = classifier
-        self.__data: list[Data] = []
-        self.__training_set: list[Data] = []
-        self.__test_set: list[Data] = []
+        self._path: str = path
+        self._classifier: Classifier = classifier
+        self._data: list[Data] = []
 
-        self.__load_data()
-
+    @abstractmethod
     def classify(self) -> None:
         pass
 
-    def get_training_set(self) -> list[Data]:
-        return self.__training_set
-    
-    def get_test_set(self) -> list[Data]:
-        return self.__test_set
+    def _load_data(self) -> None:
+        """
+        Load data from a CSV file.
+        """
 
-    def __split_data(self) -> None:
-        shuffle(self.__data)
-
-        m: int = len(self.__data) // 3
-        self.__training_set = self.__data[m:]
-        self.__test_set = self.__data[:m]
-
-    def __load_data(self) -> None:
-        if not exists(self.__path):
-            raise FileNotFoundError(f"File not found: {self.__path}")
+        if not exists(self._path):
+            raise FileNotFoundError(f"File not found: {self._path}")
         
-        with open(self.__path, 'r') as file:
-            reader = DictReader(file)
-            data = list(reader)
+        with open(self._path, 'r') as file:
+            r = reader(file)
+            data = [(line[0], line[-1]) for line in list(r)]
 
-            self.__data = self.__load(data)
-            self.__split_data()
+            self._data = self._load(data)
 
-    def __load(self, data: list[Data]):
-        if len(data) == 1:
-            return [data.clear()]
+    @abstractmethod
+    def _load(self, row: list[dict]) -> list[Data]:
+        pass
+
+class AnnotatedDataset(Dataset):
+    def __init__(self, path: str, classifier: Classifier) -> None:
+        super().__init__(path, classifier)
+        self.__training_set: list[Data] = []
+        self.__test_set: list[Data] = []
+        self._load_data()
+
+    def classify(self) -> int:
+        """
+        Classify the test set and return the accuracy.
+        """
+
+        k: int = 0
+
+        for tweet in self.__test_set:
+            print(tweet.get_data())
+            annotation: int = self._classifier.classify(tweet, self.__training_set)
+
+            if tweet.get_annotation() == annotation:
+                k += 1
+
+        return (k / len(self.__test_set)) * 100
+
+    def _split_data(self) -> None:
+        """
+        Split the data into a training set and a test set.
+        """
+
+        shuffle(self._data)
+
+        m: int = len(self._data) // 3
+        self.__training_set = self._data[m:]
+        self.__test_set = self._data[:m]
+
+    def _load_data(self):
+        """
+        Load data from a CSV file.
+        """
+
+        super()._load_data()
+        self._split_data()
+
+    def _load(self, row) -> list[Data]:
+        """
+        Load data from a list of rows.
+        """
+
+        if len(row) == 1:
+            data = Data(*row[0]).clean()
+
+            if data.get_data() == "":
+                return []
+
+            return [Data(*row[0]).clean()]
         
-        m: int = len(data) // 2
-        left: list[Data] = self.__load(data[:m])
-        right: list[Data] = self.__load(data[m:])
+        m: int = len(row) // 2
+        left: list[dict] = self._load(row[:m])
+        right: list[dict] = self._load(row[m:])
 
         return left + right
