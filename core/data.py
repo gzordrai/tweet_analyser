@@ -2,10 +2,10 @@ from re import sub
 from data_distance import DistanceStrategy, WordOverlapDistance
 
 class Data():
-    def __init__(self, annotation: str, data: str, distance: DistanceStrategy = WordOverlapDistance) -> None:
+    def __init__(self, annotation: str, data: str, distance: DistanceStrategy = WordOverlapDistance()) -> None:
         self.__annotation = annotation
         self.__data: str = data
-        self.__distance: DistanceStrategy = distance()
+        self.__distance: DistanceStrategy = distance
 
     def clean(self):
         patterns = [
@@ -17,9 +17,10 @@ class Data():
             (r"\[.*?\]", ""),                                                                               # Remove square brackets
             (r".*[:;][\)][^\n]*[:;][\(].*|.*[:;][\(][^\n]*[:;][\)].*", ""),                                 # Remove happy and sad emoticons in the same tweet
             (r"(?<=[a-zA-Z])[!\?\"\.;,]", r" \g<0>"),                                                       # Add space before punctuation only if there's a letter before
-            (r"[!\"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~]", ""),                                                 # Remove punctuation
-            (r"[.,]", ""),                                                                                  # Remove periods and commas
-            (r"\s+", " "),                                                                                  # Replace multiple spaces with a single space
+            (r"[.,!?]", ""),                                                                                # Remove periods and commas
+            (r"[!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]", ""),                                                  # Remove punctuation
+            (r"([a-zA-Z])\1{2,}", r"\1\1"),                                                                 # Limit letter repetitions
+            (r"\s+", " ")                                                                                   # Replace multiple spaces with a single space
         ]
 
         for pattern in patterns:
@@ -29,6 +30,9 @@ class Data():
             self.__data = sub(pattern[0], pattern[1], self.__data)
 
         return Data(self.__annotation, self.__data.lower().strip())
+
+    def set_annotation(self, annotation: str) -> None:
+        self.__annotation = annotation
 
     def get_annotation(self) -> str:
         return self.__annotation
