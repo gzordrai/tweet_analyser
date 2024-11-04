@@ -1,32 +1,29 @@
 from abc import ABC, abstractmethod
 from data import Data
-from data_distance import DistanceStrategy, WordOverlapDistance
 
 class Classifier(ABC):
-    def __init__(self, strategy: DistanceStrategy = WordOverlapDistance) -> None:
-        self.__distance_strategy: DistanceStrategy = strategy
-
-    def set_distance_strategy(self, strategy: DistanceStrategy) -> None:
-        self.__distance_strategy = strategy
-    
     @abstractmethod
     def classify(self, data: Data, dataset: list[Data] = []) -> int:
         pass
 
 class KNNClassifier(Classifier):
-    def __init__(self, k = 10) -> None:
+    def __init__(self, k: int = 10) -> None:
         super().__init__()
-        self.__k = k
+        self.__k: int = k
 
     def classify(self, data: Data, dataset: list[Data] = []) -> int:
-        neighbors: list[Data] = dataset[:self.__k]
-        distances: list[int] = [data.distance(neighbor) for neighbor in neighbors]
+        distances = [(data.distance(neighbor), neighbor) for neighbor in dataset]
 
-        for d in dataset[self.__k:]:
-            distance = data.distance(d)
+        distances.sort(key=lambda x: x[0])
+        k_nearest = distances[:self.__k]
 
-            if distance < max(distances):
-                neighbors[distances.index(max(distances))] = d
-                distances[distances.index(max(distances))] = distance
+        annotation_counts = {}
 
-        return max(set(neighbors), key = neighbors.count).get_annotation()
+        for _, neighbor in k_nearest:
+            annotation = neighbor.get_annotation()
+            if annotation in annotation_counts:
+                annotation_counts[annotation] += 1
+            else:
+                annotation_counts[annotation] = 1
+
+        return max(annotation_counts, key = annotation_counts.get)
