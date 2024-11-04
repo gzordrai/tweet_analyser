@@ -3,6 +3,7 @@ from classifier import Classifier
 from csv import reader
 from os.path import exists
 from random import shuffle
+from tqdm import tqdm
 from data import Data
 
 class Dataset(ABC):
@@ -10,9 +11,13 @@ class Dataset(ABC):
         self._path: str = path
         self._classifier: Classifier = classifier
         self._data: list[Data] = []
+        self._training_set: list[Data] = []
+        self._test_set: list[Data] = []
+
+        self._load_data()
 
     @abstractmethod
-    def classify(self) -> None:
+    def classify(self) -> int:
         pass
 
     def _load_data(self) -> None:
@@ -28,52 +33,7 @@ class Dataset(ABC):
             data = [(line[0], line[-1]) for line in list(r)]
 
             self._data = self._load(data)
-
-    @abstractmethod
-    def _load(self, row: list[dict]) -> list[Data]:
-        pass
-
-class AnnotatedDataset(Dataset):
-    def __init__(self, path: str, classifier: Classifier) -> None:
-        super().__init__(path, classifier)
-        self.__training_set: list[Data] = []
-        self.__test_set: list[Data] = []
-        self._load_data()
-
-    def classify(self) -> int:
-        """
-        Classify the test set and return the accuracy.
-        """
-
-        k: int = 0
-
-        for tweet in self.__test_set:
-            print(tweet.get_data())
-            annotation: int = self._classifier.classify(tweet, self.__training_set)
-
-            if tweet.get_annotation() == annotation:
-                k += 1
-
-        return (k / len(self.__test_set)) * 100
-
-    def _split_data(self) -> None:
-        """
-        Split the data into a training set and a test set.
-        """
-
-        shuffle(self._data)
-
-        m: int = len(self._data) // 3
-        self.__training_set = self._data[m:]
-        self.__test_set = self._data[:m]
-
-    def _load_data(self):
-        """
-        Load data from a CSV file.
-        """
-
-        super()._load_data()
-        self._split_data()
+            self._split_data()
 
     def _load(self, row) -> list[Data]:
         """
@@ -93,3 +53,69 @@ class AnnotatedDataset(Dataset):
         right: list[dict] = self._load(row[m:])
 
         return left + right
+    
+    @abstractmethod
+    def _split_data(self) -> None:
+        pass
+    
+    def get_data(self) -> list[Data]:
+        return self._data
+    
+    def save(self) -> None:
+        annotated_file_path: str = "annotated.csv"
+
+        with open(annotated_file_path, 'w') as file:
+            for tweet in self._data:
+                file.write(f"{tweet.get_annotation()},{tweet.get_data()}\n")
+
+class AnnotatedDataset(Dataset):
+    def __init__(self, path: str, classifier: Classifier) -> None:
+        super().__init__(path, classifier)
+
+    def _split_data(self) -> None:
+        """
+        Split the data into a training set and a test set.
+        """
+
+        shuffle(self._data)
+
+        m: int = len(self._data) // 3
+        self._training_set = self._data[m:]
+        self._test_set = self._data[:m]
+    
+    def classify(self) -> int:
+        """
+        Classify the test set and return the accuracy.
+        """
+        k: int = 0
+
+        for i in tqdm(range(len(self._test_set))):
+            tweet = self._test_set[i]
+            annotation: int = self._classifier.classify(tweet, self._training_set)
+
+            if tweet.get_annotation() == annotation:
+                k += 1
+
+        return (k / len(self._test_set)) * 100
+
+class UnannotateDataset(Dataset):
+    def __init__(self, path: str, classifier: Classifier, dataset: AnnotatedDataset) -> None:
+        super().__init__(path, classifier)
+        self._test_set: list[Data] = self._data
+        self._training_set: list[Data] = dataset.get_data()
+
+    def _split_data(self) -> None:
+        self._test_set = self._data
+
+    def classify(self) -> int:
+        """
+        Classify the test set and return the accuracy.
+        """
+
+        print("Classifying the test set...")
+
+        for i in tqdm(range(len(self._test_set))):
+            tweet: Data = self._test_set[i]
+            annotation: int = self._classifier.classify(tweet, self._training_set)
+
+            tweet.set_annotation(annotation)
