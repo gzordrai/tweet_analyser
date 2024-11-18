@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from classifier import Classifier
 from csv import reader
 from os.path import exists
+from numpy import array, ndarray
 from random import shuffle
 from tqdm import tqdm
 from data import Data
@@ -10,9 +11,9 @@ class Dataset(ABC):
     def __init__(self, path: str, classifier: Classifier) -> None:
         self._path: str = path
         self._classifier: Classifier = classifier
-        self._data: list[Data] = []
-        self._training_set: list[Data] = []
-        self._test_set: list[Data] = []
+        self._data: ndarray = array([])
+        self._training_set: ndarray = array([])
+        self._test_set: ndarray = array([])
 
         self._load_data()
 
@@ -32,7 +33,7 @@ class Dataset(ABC):
             r = reader(file)
             data = [(line[0], line[-1]) for line in list(r)]
 
-            self._data = self._load(data)
+            self._data = array(self._load(data))
             self._split_data()
 
     def _load(self, row) -> list[Data]:
@@ -49,8 +50,8 @@ class Dataset(ABC):
             return [Data(*row[0]).clean()]
         
         m: int = len(row) // 2
-        left: list[dict] = self._load(row[:m])
-        right: list[dict] = self._load(row[m:])
+        left: list[Data] = self._load(row[:m])
+        right: list[Data] = self._load(row[m:])
 
         return left + right
     
@@ -58,7 +59,7 @@ class Dataset(ABC):
     def _split_data(self) -> None:
         pass
     
-    def get_data(self) -> list[Data]:
+    def get_data(self) -> ndarray:
         return self._data
     
     def save(self) -> None:
