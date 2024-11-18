@@ -1,10 +1,11 @@
 from abc import ABC, abstractmethod
-from classifier import Classifier
-from csv import reader
 from os.path import exists
-from numpy import array, ndarray
+from numpy import array, fromiter, loadtxt, ndarray
 from random import shuffle
+from time import time
 from tqdm import tqdm
+
+from classifier import Classifier
 from data import Data
 
 class Dataset(ABC):
@@ -25,35 +26,26 @@ class Dataset(ABC):
         """
         Load data from a CSV file.
         """
+        print(f"Loading data from {self._path}...")
+        start = time()
 
         if not exists(self._path):
             raise FileNotFoundError(f"File not found: {self._path}")
         
-        with open(self._path, 'r') as file:
-            r = reader(file)
-            data = [(line[0], line[-1]) for line in list(r)]
+        data = loadtxt(
+            self._path,
+            delimiter = ',',
+            dtype = str,
+            usecols = (0, -1),
+            skiprows = 1
+            )
+        self._data = fromiter(
+            (Data(*row) for row in data),
+            dtype = Data,
+            count = len(data)
+            )
 
-            self._data = array(self._load(data))
-            self._split_data()
-
-    def _load(self, row) -> list[Data]:
-        """
-        Load data from a list of rows.
-        """
-
-        if len(row) == 1:
-            data = Data(*row[0]).clean()
-
-            if data.get_data() == "":
-                return []
-
-            return [Data(*row[0]).clean()]
-        
-        m: int = len(row) // 2
-        left: list[Data] = self._load(row[:m])
-        right: list[Data] = self._load(row[m:])
-
-        return left + right
+        print(f"Data loaded in {time() - start:.2f} seconds.")
     
     @abstractmethod
     def _split_data(self) -> None:
