@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from numpy import array, intersect1d
 
 class DistanceStrategy(ABC):
     @abstractmethod
@@ -7,17 +8,10 @@ class DistanceStrategy(ABC):
 
 class WordOverlapDistance(DistanceStrategy):
     def distance(self, source, target) -> int:
-        s: str = source.get_data().split(' ')
-        t: str = target.get_data().split(' ')
-        total_words: int = len(s) + len(t)
-        common_words: int  = 0
+        s = array(source.get_data().split(' '))
+        t = array(target.get_data().split(' '))
+        total_words = len(s) + len(t)
 
-        for word in source.get_data().split(' '):
-            if word in target.get_data():
-                common_words += 1
+        common_words = len(intersect1d(s, t))
 
-        for word in target.get_data().split(' '):
-            if word in source.get_data():
-                common_words += 1
-
-        return (total_words - common_words) / total_words
+        return (total_words - 2 * common_words) / total_words
