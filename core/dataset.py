@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from os.path import exists
-from numpy import array, fromiter, loadtxt, ndarray
+from numpy import array, fromiter, loadtxt, zeros, ndarray
 from random import shuffle
 from time import time
 from tqdm import tqdm
@@ -40,12 +40,14 @@ class Dataset(ABC):
             skiprows = 1
             )
         self._data = fromiter(
-            (Data(*row) for row in data),
+            (Data(*row).clean() for row in data),
             dtype = Data,
             count = len(data)
             )
 
         print(f"Data loaded in {time() - start:.2f} seconds.")
+
+        self._split_data()
     
     @abstractmethod
     def _split_data(self) -> None:
@@ -94,8 +96,8 @@ class AnnotatedDataset(Dataset):
 class UnannotateDataset(Dataset):
     def __init__(self, path: str, classifier: Classifier, dataset: AnnotatedDataset) -> None:
         super().__init__(path, classifier)
-        self._test_set: list[Data] = self._data
-        self._training_set: list[Data] = dataset.get_data()
+        self._test_set: ndarray[Data] = self._data
+        self._training_set: ndarray[Data] = dataset.get_data()
 
     def _split_data(self) -> None:
         self._test_set = self._data
@@ -104,8 +106,6 @@ class UnannotateDataset(Dataset):
         """
         Classify the test set and return the accuracy.
         """
-
-        print("Classifying the test set...")
 
         for i in tqdm(range(len(self._test_set))):
             tweet: Data = self._test_set[i]
