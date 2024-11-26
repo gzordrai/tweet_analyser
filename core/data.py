@@ -1,3 +1,4 @@
+from numpy import array
 from re import sub
 from data_distance import DistanceStrategy, WordOverlapDistance
 
@@ -6,6 +7,9 @@ class Data():
         self.__annotation = annotation
         self.__data: str = data
         self.__distance: DistanceStrategy = distance
+        self.__words = array(data.split(' '))
+        self.__length = len(self.__words)
+        self.__set_words = set(self.__words)
 
     def clean(self):
         patterns = [
@@ -15,7 +19,7 @@ class Data():
             (r".+ - http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", ""), # Remove attached links
             (r"http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+", ""),      # Remove links
             (r"\[.*?\]", ""),                                                                               # Remove square brackets
-            (r".*[:;][\)][^\n]*[:;][\(].*|.*[:;][\(][^\n]*[:;][\)].*", ""),                                 # Remove happy and sad emoticons in the same tweet
+            (r".*[:;]\[\)][^\n]*[:;][\(].*|.*[:;][\(][^\n]*[:;][\)].*", ""),                                 # Remove happy and sad emoticons in the same tweet
             (r"(?<=[a-zA-Z])[!\?\"\.;,]", r" \g<0>"),                                                       # Add space before punctuation only if there's a letter before
             (r"[.,!?]", ""),                                                                                # Remove periods and commas
             (r"[!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]", ""),                                                  # Remove punctuation
@@ -31,6 +35,18 @@ class Data():
 
         return Data(self.__annotation, self.__data.lower().strip())
 
+    def get_words(self) -> array:
+        return self.__words
+    
+    def get_set_words(self) -> set:
+        return self.__set_words
+
+    def __len__(self) -> int:
+        return self.__length
+
+    def distance(self, d) -> int:
+        return self.__distance.distance(self, d)
+    
     def set_annotation(self, annotation: str) -> None:
         self.__annotation = annotation
 
@@ -39,6 +55,3 @@ class Data():
 
     def get_data(self) -> str:
         return self.__data
-
-    def distance(self, d) -> int:
-        return self.__distance.distance(self, d)
