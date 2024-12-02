@@ -14,6 +14,9 @@ class KNNClassifier(Classifier):
         super().__init__()
         self.__k: int = k
 
+    def set_k(self, k: int):
+        self.__k = k
+
     def classify(self, data: Data, dataset: ndarray[Data] = array([])) -> int:
         distances = fromiter(
             ((data.distance(neighbor), neighbor) for neighbor in dataset),
