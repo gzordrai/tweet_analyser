@@ -27,7 +27,7 @@ La partie core utilise des principes de programmation orientée objet, comme le 
 
 ### Description de l'organisation au sein du binôme
 
-Pour l'organisation dans le binôme, Ali s'est principalement chargé de la partie graphique tout en proposant des idées pour améliorer l'IA. Thibault, de son côté, s'est concentré sur la partie core, en implémentant différentes classes pour simplifier l'intégration avec l'API. En ce qui concerne l'API, nous avons travaillé ensemble dessus, car elle fait le lien direct entre nos deux parties.
+Pour l'organisation dans le binôme, nous avons d'abord chacun travaillé sur le code des premières séances séparément, en utilisant des branches distinctes, ce qui nous a permis de pratiquer individuellement. Par la suite, nous avons regroupé tout le code pour avancer ensemble sur le projet. Ali s'est principalement occupé de la partie graphique tout en proposant des idées pour améliorer l'IA. Thibault, de son côté, a pris en charge la partie core, en développant des classes qui facilitent l'intégration avec l'API. Concernant l'API, nous avons travaillé ensemble dessus, car elle constitue le lien direct entre nos deux parties.
 
 ## Détails des différents travaux réalisés
 
