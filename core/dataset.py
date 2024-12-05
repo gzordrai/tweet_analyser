@@ -106,9 +106,15 @@ class UnannotateDataset(Dataset):
         """
         Classify the test set and return the accuracy.
         """
+        k: int = 0
 
         for i in tqdm(range(len(self._test_set))):
             tweet: Data = self._test_set[i]
             annotation: int = self._classifier.classify(tweet, self._training_set)
 
+            if annotation == tweet.get_annotation():
+                k += 1
+
             tweet.set_annotation(annotation)
+
+        return (k / len(self._test_set)) * 100

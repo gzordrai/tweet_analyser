@@ -34,65 +34,71 @@ class KNNClassifier(Classifier):
         return max(annotation_counts, key=annotation_counts.get)
 
 class NaiveBayesClassifier(Classifier):
-    def __init__(self) -> None:
-        self.class_probabilities = defaultdict(float)
-        self.feature_probabilities = defaultdict(lambda: defaultdict(float))
-        self.classes = set()
-        self.vocab = set()
+    def __init__(self, ngram_size: int = 1) -> None:
+        self.__class_probabilities = defaultdict(float)
+        self.__feature_probabilities = defaultdict(lambda: defaultdict(float))
+        self.__classes = set()
+        self.__vocab = set()
+        self.__ngram_size: int = ngram_size
+        
+    def _generate_ngrams(self, words):
+        """
+        Generate n-grams from a list of words.
+        """
+        print(words)
 
-    def _generate_ngrams(self, words, n=1):
-        """Generate n-grams from a list of words."""
-        if not isinstance(words, list):
-            raise TypeError(f"Expected list of words, got {type(words)}")
-        if n < 1:
-            raise ValueError("ngram_size must be 1 or greater")
-
-        if n == 1:
+        if self.__ngram_size == 1:
             return words
-        return [" ".join(words[i:i + n]) for i in range(len(words) - n + 1)]
 
-    def train(self, dataset, ngram_size=1) -> None:
+        return [" ".join(words[i:i + self.__ngram_size]) for i in range(len(words) - self.__ngram_size + 1)]
+
+    def set_ngram_size(self, size: int) -> None:
+        self.__ngram_size = size
+
+    def train(self, dataset) -> None:
         class_counts = defaultdict(int)
         feature_counts = defaultdict(lambda: defaultdict(int))
         total_count = len(dataset)
 
         for data in dataset:
             annotation = data.get_annotation()
-            self.classes.add(annotation)
+            self.__classes.add(annotation)
             class_counts[annotation] += 1
 
             words = [word for word in data.get_data().split() if len(word) > 3]
-            ngrams = self._generate_ngrams(words, ngram_size)
+            ngrams = self._generate_ngrams(words)
 
             for ngram in ngrams:
-                self.vocab.add(ngram)
+                self.__vocab.add(ngram)
                 feature_counts[annotation][ngram] += 1
 
-        for annotation in self.classes:
-            self.class_probabilities[annotation] = class_counts[annotation] / total_count
+        for annotation in self.__classes:
+            self.__class_probabilities[annotation] = class_counts[annotation] / total_count
             total_ngrams = sum(feature_counts[annotation].values())
 
             for ngram in feature_counts[annotation]:
-                self.feature_probabilities[annotation][ngram] = (
+                self.__feature_probabilities[annotation][ngram] = (
                     feature_counts[annotation][ngram] + 1
-                ) / (total_ngrams + len(self.vocab))
+                ) / (total_ngrams + len(self.__vocab))
 
-    def classify(self, data: Data, ngram_size=1) -> str:
+    def classify(self, data: Data, dataset = array([])) -> str:
+        if not self.__classes:
+            raise ValueError("Classifier has not been trained yet.")
+
         words = [word for word in data.get_data().split() if len(word) > 3]
-        ngrams = self._generate_ngrams(words, ngram_size)
+        ngrams = self._generate_ngrams(words)
 
         class_scores = defaultdict(float)
 
-        for annotation in self.classes:
-            class_scores[annotation] = log(self.class_probabilities[annotation])
+        for annotation in self.__classes:
+            class_scores[annotation] = log(self.__class_probabilities[annotation])
 
             for ngram in ngrams:
-                if ngram in self.feature_probabilities[annotation]:
-                    class_scores[annotation] += log(self.feature_probabilities[annotation][ngram])
+                if ngram in self.__feature_probabilities[annotation]:
+                    class_scores[annotation] += log(self.__feature_probabilities[annotation][ngram])
                 else:
-                    # Apply Laplace smoothing for unseen n-grams
                     class_scores[annotation] += log(
-                        1 / (sum(self.feature_probabilities[annotation].values()) + len(self.vocab))
+                        1 / (sum(self.__feature_probabilities[annotation].values()) + len(self.__vocab))
                     )
 
         return max(class_scores, key=class_scores.get)
