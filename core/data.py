@@ -1,6 +1,6 @@
 from numpy import array
 from re import sub
-from data_distance import DistanceStrategy, WordOverlapDistance
+from .data_distance import DistanceStrategy, WordOverlapDistance
 
 class Data():
     def __init__(self, annotation: str, data: str, distance: DistanceStrategy = WordOverlapDistance()) -> None:

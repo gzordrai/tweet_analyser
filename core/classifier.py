@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from collections import defaultdict
 from numpy import array, fromiter, log, ndarray
 
-from data import Data
+from .data import Data
 
 class Classifier(ABC):
     @abstractmethod

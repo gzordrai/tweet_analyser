@@ -5,8 +5,11 @@ from random import shuffle
 from time import time
 from tqdm import tqdm
 
-from classifier import Classifier
-from data import Data
+import pandas as pd
+from pandas import DataFrame
+
+from .classifier import Classifier
+from .data import Data
 
 class Dataset(ABC):
     def __init__(self, path: str, classifier: Classifier) -> None:
@@ -98,9 +101,13 @@ class UnannotateDataset(Dataset):
         super().__init__(path, classifier)
         self._test_set: ndarray[Data] = self._data
         self._training_set: ndarray[Data] = dataset.get_data()
+        self._annotated_df = pd.DataFrame(columns=[0, 1])
 
     def _split_data(self) -> None:
         self._test_set = self._data
+
+    def get_df(self, annotation, tweet) -> DataFrame :
+        self._annotated_df = pd.concat([self._annotated_df, pd.DataFrame([[annotation, tweet]], columns=[0, 1])], ignore_index=True)
 
     def classify(self) -> int:
         """
@@ -116,5 +123,7 @@ class UnannotateDataset(Dataset):
                 k += 1
 
             tweet.set_annotation(annotation)
+            clean_annotation = str(annotation).strip('"')
+            self.get_df(int(clean_annotation), tweet.get_data())
 
-        return (k / len(self._test_set)) * 100
+        return ((k / len(self._test_set)) * 100),self._annotated_df
