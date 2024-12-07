@@ -13,6 +13,18 @@ import numpy as np
 import requests
 from PyQt6.QtWidgets import QErrorMessage
 
+from PyQt6.QtWidgets import (
+    QApplication, QDialog, QTableWidget, QTableWidgetItem, 
+    QVBoxLayout, QPushButton, QMessageBox, QLabel, QScrollArea
+)
+from PyQt6.QtGui import QBrush, QColor, QPixmap, QFont
+from PyQt6.QtCore import Qt, pyqtSlot
+
+
+
+
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super(MainWindow, self).__init__()
@@ -294,6 +306,9 @@ class MainWindow(QMainWindow):
                     data_json = response.json()
                     result = data_json['accuracy']
                     accuracy = "{:.2f}%".format(result)
+
+                    if "cm" in data_json:
+                        cm_df = pd.DataFrame(data_json["cm"])
                     
                     QMessageBox.information(self, "Success", f"Model Accuracy : {accuracy}")
                     
@@ -301,8 +316,9 @@ class MainWindow(QMainWindow):
                         new_df = pd.DataFrame(data_json["data"])
                         self.modified_data = new_df.copy()
                         self.populate_table(self.modified_data, "UnAnnotated Dataset", 0, 1)
-                    self.show_confusion_matrix_window()
-                    self.save_results_to_json(classifier, param_label, model_param, accuracy)
+                    
+                    conf_matrix = self.show_confusion_matrix_window(cm_df)
+                    self.save_results_to_json(classifier, param_label, model_param, accuracy, conf_matrix)
                 else:
                     self.show_error(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
@@ -426,12 +442,12 @@ class MainWindow(QMainWindow):
 
 
 
-    def show_confusion_matrix_window(self):
-        conf_matrix = np.array([[50, 10, 5], [12, 60, 3], [8, 4, 45]])
-        labels = ['Positive', 'Negative', 'Neutral']
+    def show_confusion_matrix_window(self, df):
                
-        self.confusion_window.show_confusion_matrix(conf_matrix, labels)
+        self.confusion_window.show_confusion_matrix(df)
+        self.confusion_window.export_confusion_matrix()
         self.confusion_window.show()
+        return self.confusion_window.export_confusion_matrix()
 
     def show_progress_dialog(self, message):
         self.progress_dialog = ProgressDialog(message, self)
@@ -446,13 +462,14 @@ class MainWindow(QMainWindow):
             del self.progress_dialog
 
 
-    def save_results_to_json(self, classifier, param_label, model_param, accuracy):
+    def save_results_to_json(self, classifier, param_label, model_param, accuracy, confusion_matrix):
  
         results_data = {
             "choose_algorithm": classifier,
             "model_parameters_label": param_label,
             "model_parameters_value": model_param,
             "result_accuracy": accuracy,
+            "confusion_matrix" : confusion_matrix,
             "training_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         }
 
@@ -478,45 +495,42 @@ class MainWindow(QMainWindow):
 
 
 
+
     def show_stats_table(self):
 
         if hasattr(self, 'stats_table') and self.stats_table is not None:
             self.right_layout.removeWidget(self.stats_table)
             self.stats_table.deleteLater()
             self.stats_table = None  
-
-
         results_file_path = os.path.join('datasets', 'db', 'resultsdb.json')
         if not os.path.exists(results_file_path):
-            print(f"Results file not found at {results_file_path}.")
+            QMessageBox.warning(self, "File Not Found", f"Results file not found at {results_file_path}.")
             return
 
         try:
             with open(results_file_path, 'r') as rf:
                 data = json.load(rf)
                 if not isinstance(data, list):
-                    print("JSON data is not a list.")
+                    QMessageBox.warning(self, "Invalid Data", "JSON data is not a list.")
                     return
-
                 data.sort(key=lambda x: x.get("training_date", ""), reverse=True)
                 top_entries = data[:5]
         except Exception as e:
-            print("Error reading JSON:", e)
+            QMessageBox.critical(self, "Error", f"Error reading JSON: {e}")
             return
 
         if not top_entries:
-            print("No top entries found.")
+            QMessageBox.information(self, "No Data", "No top entries found.")
             return
 
-
         self.stats_table = QTableWidget(self)
-        self.stats_table.setColumnCount(5)
-        self.stats_table.setHorizontalHeaderLabels(["Algorithm", "Param Label", "Param Value", "Accuracy", "Date"])
+        self.stats_table.setColumnCount(5) 
+        self.stats_table.setHorizontalHeaderLabels([
+            "Algorithm", "Param Label", "Param Value", "Accuracy", "Confusion Matrix"
+        ])
         self.stats_table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
         self.stats_table.setRowCount(len(top_entries))
-
-
-        font = self.stats_table.font()
+        font = QFont()
         font.setPointSize(12)
         self.stats_table.setFont(font)
         self.stats_table.setStyleSheet("""
@@ -533,39 +547,75 @@ class MainWindow(QMainWindow):
 
 
         for i, entry in enumerate(top_entries):
-            alg_item = QTableWidgetItem(entry.get("choose_algorithm", ""))
-            param_label_item = QTableWidgetItem(entry.get("model_parameters_label", ""))
-            param_value_item = QTableWidgetItem(entry.get("model_parameters_value", ""))
-            accuracy_item = QTableWidgetItem(entry.get("result_accuracy", ""))
-            date_item = QTableWidgetItem(entry.get("training_date", ""))
+            alg_item = QTableWidgetItem(entry.get("choose_algorithm", "N/A"))
+            param_label_item = QTableWidgetItem(entry.get("model_parameters_label", "N/A"))
+            param_value_item = QTableWidgetItem(entry.get("model_parameters_value", "N/A"))
+            accuracy_item = QTableWidgetItem(entry.get("result_accuracy", "N/A"))
+            cm_path = entry.get("confusion_matrix", "N/A") 
 
+            cm_item = QTableWidgetItem(cm_path)
 
-            for item in [alg_item, param_label_item, param_value_item, accuracy_item, date_item]:
+  
+            if cm_path != "N/A":
+                cm_item.setForeground(QBrush(QColor("blue")))
+                cm_item.setToolTip("Click to view confusion matrix image")
+     
+                cm_item.setFlags(cm_item.flags() | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
+            else:
+                cm_item.setForeground(QBrush(QColor("white")))
+                cm_item.setToolTip("No confusion matrix available")
+                cm_item.setFlags(cm_item.flags() & ~Qt.ItemFlag.ItemIsSelectable)
+
+            for item in [alg_item, param_label_item, param_value_item, accuracy_item, cm_item]:
                 item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
                 item.setBackground(QBrush(QColor("#696969")))
-                item.setForeground(QBrush(QColor("white")))
-
+                if item != cm_item:
+                    item.setForeground(QBrush(QColor("white")))
+                else:
+                    item.setForeground(QBrush(QColor("blue")))
 
             self.stats_table.setItem(i, 0, alg_item)
             self.stats_table.setItem(i, 1, param_label_item)
             self.stats_table.setItem(i, 2, param_value_item)
             self.stats_table.setItem(i, 3, accuracy_item)
-            self.stats_table.setItem(i, 4, date_item)
-
+            self.stats_table.setItem(i, 4, cm_item)
 
         self.stats_table.resizeColumnsToContents()
-        self.stats_table.verticalHeader().setDefaultSectionSize(45)
-        self.stats_table.horizontalHeader().setDefaultSectionSize(125)
+        self.stats_table.verticalHeader().setDefaultSectionSize(50)
+        self.stats_table.horizontalHeader().setDefaultSectionSize(140)  
 
-    
+        self.stats_table.setSortingEnabled(True)
+
+
         self.right_layout.addWidget(self.stats_table)
         self.stats_table.setVisible(True)
 
+     
+        self.stats_table.cellClicked.connect(self.handle_cell_clicked)
 
+    
         self.position_stats_table()
 
-        
-        # self.refresh_other_elements()
+    @pyqtSlot(int, int)
+    def handle_cell_clicked(self, row, column):
+
+        if column == 4:
+            cm_path = self.stats_table.item(row, column).text()
+            if cm_path and cm_path != "N/A":
+ 
+                if not os.path.exists(cm_path):
+                    QMessageBox.warning(
+                        self, "File Not Found",
+                        f"The confusion matrix image was not found at:\n{cm_path}"
+                    )
+                    return
+                self.image_window = ConfusionMatrixImageWindow(cm_path, self)
+                self.image_window.show()
+            else:
+                QMessageBox.information(
+                    self, "No Image",
+                    "No confusion matrix image available for this entry."
+                )
 
 
 
@@ -575,7 +625,7 @@ class MainWindow(QMainWindow):
         table_rect = self.tweet_table.geometry() 
 
 
-        stats_width = 650
+        stats_width = 680
         stats_height = 250
 
   
@@ -615,6 +665,27 @@ class MainWindow(QMainWindow):
 
 
 
+# class ConfusionMatrixWindow(QDialog):
+#     def __init__(self, parent=None):
+#         super().__init__(parent)
+#         self.setWindowTitle("Confusion Matrix")
+#         self.setMinimumSize(600, 400)
+
+#         self.layout = QVBoxLayout(self)
+#         self.figure = plt.Figure(figsize=(5,4), tight_layout=True)
+#         self.canvas = FigureCanvas(self.figure)
+#         self.layout.addWidget(self.canvas)
+
+#     def show_confusion_matrix(self, conf_matrix, labels):
+#         self.figure.clear()
+#         ax_cm = self.figure.add_subplot(111)
+#         sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels, ax=ax_cm)
+#         ax_cm.set_title("Confusion Matrix")
+#         self.figure.tight_layout()
+#         self.canvas.draw()
+
+
+
 class ConfusionMatrixWindow(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -622,17 +693,47 @@ class ConfusionMatrixWindow(QDialog):
         self.setMinimumSize(600, 400)
 
         self.layout = QVBoxLayout(self)
-        self.figure = plt.Figure(figsize=(5,4), tight_layout=True)
+        self.figure = plt.Figure(figsize=(5, 4), tight_layout=True)
         self.canvas = FigureCanvas(self.figure)
         self.layout.addWidget(self.canvas)
 
-    def show_confusion_matrix(self, conf_matrix, labels):
+    def show_confusion_matrix(self, conf_matrix_df: pd.DataFrame):
+
         self.figure.clear()
         ax_cm = self.figure.add_subplot(111)
-        sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels, ax=ax_cm)
-        ax_cm.set_title("Confusion Matrix")
+        sentiment_labels = ["Negative", "Neutral", "Positive"]
+
+        sns.heatmap(
+            conf_matrix_df,
+            annot=True,
+            fmt='d',
+            cmap='Blues',
+            xticklabels=sentiment_labels,
+            yticklabels=sentiment_labels,
+            ax=ax_cm
+        )
+
+        ax_cm.set_title("Confusion Matrix", fontsize=16)
+        ax_cm.set_xlabel('Predicted Labels', fontsize=12)
+        ax_cm.set_ylabel('Actual Labels', fontsize=12)
+
         self.figure.tight_layout()
         self.canvas.draw()
+
+    def export_confusion_matrix(self):
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        directory = 'datasets/img/'
+        os.makedirs(directory, exist_ok=True)
+
+        self.filepath = os.path.join(directory, f"cm_{timestamp}.png")
+        try:
+            self.figure.savefig(self.filepath)
+            print(f"Confusion matrix saved to {self.filepath}")
+            return self.filepath
+        except Exception as e:
+            print(f"Failed to save confusion matrix: {e}")
+
+
 
 
 class ProgressDialog(QDialog):
@@ -652,3 +753,37 @@ class ProgressDialog(QDialog):
 
         self.setWindowModality(Qt.WindowModality.ApplicationModal)
 
+
+
+class ConfusionMatrixImageWindow(QDialog):
+    def __init__(self, image_path, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Confusion Matrix Image")
+        self.setMinimumSize(600, 600)
+
+        layout = QVBoxLayout(self)
+
+        # Check if the image exists
+        if not os.path.exists(image_path):
+            error_label = QLabel(f"Image not found at {image_path}.")
+            layout.addWidget(error_label)
+            return
+
+        # Load and display the image
+        pixmap = QPixmap(image_path)
+        if pixmap.isNull():
+            error_label = QLabel(f"Failed to load image from {image_path}.")
+            layout.addWidget(error_label)
+            return
+
+        image_label = QLabel(self)
+        # Adjust the scaling method for PyQt6
+        image_label.setPixmap(
+            pixmap.scaled(
+                self.size(), 
+                Qt.AspectRatioMode.KeepAspectRatio, 
+                Qt.TransformationMode.SmoothTransformation
+            )
+        )
+        image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(image_label)

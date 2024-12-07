@@ -4,7 +4,7 @@ from numpy import array, fromiter, loadtxt, zeros, ndarray
 from random import shuffle
 from time import time
 from tqdm import tqdm
-
+from sklearn.metrics import confusion_matrix
 import pandas as pd
 from pandas import DataFrame
 
@@ -95,6 +95,26 @@ class AnnotatedDataset(Dataset):
                 k += 1
 
         return (k / len(self._test_set)) * 100
+
+    def calculate_confusion_matrix(self) -> pd.DataFrame:
+        actuals = []
+        predictions = []
+
+
+        for tweet in tqdm(self._test_set, desc="CM.."):
+            actuals.append(tweet.get_annotation())
+            predicted = self._classifier.classify(tweet, self._training_set)
+            predictions.append(predicted)
+
+        cm = confusion_matrix(actuals, predictions, labels=sorted(set(actuals)))
+
+        classes = sorted(set(actuals))
+        df = pd.DataFrame(cm, index=classes, columns=classes)
+        df.index.name = 'Actual'
+        df.columns.name = 'Predicted'
+
+        return df
+
 
 class UnannotateDataset(Dataset):
     def __init__(self, path: str, classifier: Classifier, dataset: AnnotatedDataset) -> None:
