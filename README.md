@@ -77,8 +77,20 @@ The sentiment analysis application has user friendly GUI built with **PyQt6**. T
 
 
 ## Résultats de la classification avec les différentes méthodes et analyse
+- KNN-Classifier with KNN 1
+![KNN-Classifier](datasets/img/cm_20241207_232144.png "KNN 1")
+- KNN-Classifier with KNN 3
+![KNN-Classifier](datasets/img/cm_20241207_232157.png "KNN 3")
+- KNN-Classifier with KNN 5
+![KNN-Classifier](datasets/img/cm_20241207_232314.png "KNN 5")
 
-[confusion matrix image to explain accurency]
+- Naive Bayes with Ngram 1
+![Naive Bayes](datasets/img/cm_20241207_232353.png "Ngram 1")
+- Naive Bayes with Ngram 2
+![Naive Bayes](datasets/img/cm_20241207_232405.png "Ngram 2")
+- Naive Bayes with Ngram 3
+![Naive Bayes](datasets/img/cm_20241207_232416.png "Ngram 3")
+
 
 ## Conclusions
 
