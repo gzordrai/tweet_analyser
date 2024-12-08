@@ -143,6 +143,6 @@ pu comparer leurs performances et mieux comprendre leurs avantages et limites re
 
 La structure modulaire de notre projet, organisée en api, app et core, a facilité le travail en groupe et a rendu l’ajout de nouvelles fonctionnalités, comme le classifieur Bayesien, plus intuitif.
 
-Enfin, ce projet a renforcé notre compréhension liés à l’analyse de texte, tels que la gestion des données bruitées et le choix des représentations textuelles les plus pertinentes.
+Enfin, ce projet a renforcé notre compréhension de l’analyse de texte, notamment la gestion des données bruitées et le choix des représentations textuelles les plus pertinentes.
 Les résultats obtenus montrent que, même avec des algorithmes relativement simples, il est possible d'obtenir des performances intéressantes, tout en ouvrant des perspectives pour
 des améliorations futures, comme l'intégration de modèles plus avancés ou l'exploration d'autres techniques de traitement de texte.
