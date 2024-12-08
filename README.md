@@ -8,14 +8,27 @@ Thibault Tisserand
 ## Installation
 
 ```bash
-TODO
+# Cloning repository
+git clone https://gitlab-etu.fil.univ-lille.fr/thibault.tisserand.etu/pje.git
+cd pje
+
+# Install dependencies 
+pip install PyQt6 "fastapi[standard]" numpy tqdm seaborn pandas matplotlib scikit-learn
+
+# Starting the api
+cd api/src/
+uvicorn.exe main:app --host localhost --port 8000
+
+# Starting the application
+cd app/src/
+python main.py
 ```
 
 ## Description générale du projet
 
 ### Description de la problématique
 
-Ce projet à pour but concevoir une application capable de classifier le sentiment général (positif, négatif, neutre) exprimé dans des tweets portant sur un sujet spécifique. Pour atteindre cet objectif, plusieurs algorithmes d'apprentissage supervisé classiques, notamment le Dictionnaire, KNN et Bayes, seront mis en œuvre. Les performances de ces approches seront ensuite comparées et analysées afin d'identifier les plus adaptées à cette problématique.
+Ce projet a pour but de concevoir une application capable de classifier le sentiment général (positif, négatif, neutre) exprimé dans des tweets portant sur un sujet spécifique. Pour atteindre cet objectif, plusieurs algorithmes d'apprentissage supervisé classiques, notamment le Dictionnaire, KNN et Bayes, seront mis en œuvre. Les performances de ces approches seront ensuite comparées et analysées afin d'identifier les plus adaptées à cette problématique.
 
 ### Description générale de l'architecture du projet
 
@@ -25,7 +38,7 @@ Le projet est structuré en trois "packages" principaux :
 - `app` : Il correspond à l'interface graphique du projet, qui utilise l'API pour interagir avec le reste de l'application.
 - `core` : Ce package contient toute la logique liée au machine learning et aux classifieurs.
 
-L’API a été développée avec `FastAPI` et représente une petite partie du projet. L'application graphique, quant à elle, a été réalisée avec `PyQT6`, une bibliothèque Python dédiée à la création d’applications de bureau. Enfin, la partie `core` a été entièrement codée à la main en s’appuyant uniquement sur `numpy` pour garantir de bonnes performances et sur `tqdm` pour afficher une barre de progression lors des itérations.
+L'API a été développée avec `FastAPI` et représente une petite partie du projet. L'application graphique, quant à elle, a été réalisée avec `PyQT6`, une bibliothèque Python dédiée à la création d’applications de bureau. Enfin, la partie `core` a été entièrement codée à la main en s’appuyant uniquement sur `numpy` pour garantir de bonnes performances et sur `tqdm` pour afficher une barre de progression lors des itérations.
 
 La partie core utilise des principes de programmation orientée objet, comme le polymorphisme, ainsi que des design patterns tels que Strategy. Ce dernier a été mis en place pour anticiper l'ajout futur de nouveaux classifieurs, ce qui s'est avéré très utile pour intégrer le classifieur Bayesien par la suite.
 
