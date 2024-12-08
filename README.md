@@ -5,6 +5,12 @@
 Ali Ashraf
 Thibault Tisserand
 
+## Installation
+
+```bash
+TODO
+```
+
 ## Description générale du projet
 
 ### Description de la problématique
@@ -74,9 +80,24 @@ The sentiment analysis application has user friendly GUI built with **PyQt6**. T
 - **Model Training History**
   - Maintain a history of the model trainings, including model names, hyperparameters, confusion matrix images and accuracy, stored in a json file.
 
-
-
 ## Résultats de la classification avec les différentes méthodes et analyse
+
+Les résultats présentés dans les matrices de confusion ci-dessous illustrent les performances des algorithmes de classification implémentés dans le projet.
+Les différentes configurations testées, incluant le classifieur KNN avec divers k (k=1, k=3, k=5) ainsi que le classifieur Bayesien avec différentes représentations
+d’ngrams (n=1, n=2, n=3), révèlent des variations dans la précision et les erreurs des prédictions.
+
+Pour le KNN, on peut constater que la valeur de k influence directement le compromis entre précision et stabilité. Par exemple, un k=1 montre des erreurs plus
+significatives sur les classes "Neutral" et "Positive", suggérant une sensibilité accrue au bruit dans les données d'entraînement. À l'inverse, des valeurs plus
+élevées comme k=5 tendent à réduire l'impact de ces fluctuations, tout en maintenant une bonne précision globale.
+
+Du côté du Naive Bayes, les représentations basées sur des ngrams montrent une nette amélioration au fur et à mesure que le modèle intègre davantage de contextes
+linguistiques. Les ngrams de taille 1 (unigrams) affichent des performances correctes mais limitées dans la capture des relations complexes entre mots, tandis que
+les bigrams et trigrams renforcent significativement la précision, en particulier pour les classes avec des nuances de sentiment, comme "Neutral".
+
+Ces résultats nous montrent l'intérêt d'ajuster les hyperparamètres et les représentations textuelles selon les spécificités des données pour obtenir
+des modèles plus robustes et performants. Cette analyse nous permet également de constater les forces respectives des approches KNN (adaptabilité locale) et Naive
+Bayes (gestion efficace des relations textuelles).
+
                   - KNN-Classifier with KNN 1
 ![KNN-Classifier](datasets/img/cm_20241207_232144.png "KNN 1")
 
@@ -95,11 +116,20 @@ The sentiment analysis application has user friendly GUI built with **PyQt6**. T
                   - Naive Bayes with Ngram 3
 ![Naive Bayes](datasets/img/cm_20241207_232416.png "Ngram 3")
 
-
 ## Conclusions
 
-En conclusion, ce projet nous a permis d'apprendre des concepts du machine learning tout en ajoutant nos connaissances en programmation orientée objet, tout en développant une application complète, de l'analyse des données à la conception de l'interface utilisateur. Grâce à l’implémentation de plusieurs algorithmes de classification, nous avons pu comparer leurs performances et mieux comprendre leurs avantages et limites respectifs.
+En conclusion, les résultats obtenus à travers l’analyse des matrices de confusion mettent en évidence l’impact des hyperparamètres et des représentations
+textuelles sur les performances des modèles. Les tests réalisés avec différentes valeurs de k pour le KNN et les variations d’ngrams pour le Naive Bayes
+montrent clairement que chaque configuration offre des avantages et des limites selon le contexte. Par exemple, un faible k peut être plus précis pour
+des données moins bruitées, mais plus sensible aux erreurs, tandis que des ngrams plus complexes améliorent la compréhension des relations entre mots,
+renforçant ainsi la robustesse du modèle.
+
+Ce projet nous a permis d'apprendre des concepts du machine learning tout en ajoutant nos connaissances en programmation orientée objet, et en développant
+une application complète, de l'analyse des données à la conception de l'interface utilisateur. Grâce à l’implémentation de plusieurs algorithmes de classification, nous avons
+pu comparer leurs performances et mieux comprendre leurs avantages et limites respectifs.
 
 La structure modulaire de notre projet, organisée en api, app et core, a facilité le travail en groupe et a rendu l’ajout de nouvelles fonctionnalités, comme le classifieur Bayesien, plus intuitif.
 
-Enfin, ce projet a renforcé notre compréhension liés à l’analyse de texte, tels que la gestion des données bruitées et le choix des représentations textuelles les plus pertinentes. Les résultats obtenus montrent que, même avec des algorithmes relativement simples, il est possible d'obtenir des performances intéressantes, tout en ouvrant des perspectives pour des améliorations futures, comme l'intégration de modèles plus avancés ou l'exploration d'autres techniques de traitement de texte.
+Enfin, ce projet a renforcé notre compréhension liés à l’analyse de texte, tels que la gestion des données bruitées et le choix des représentations textuelles les plus pertinentes.
+Les résultats obtenus montrent que, même avec des algorithmes relativement simples, il est possible d'obtenir des performances intéressantes, tout en ouvrant des perspectives pour
+des améliorations futures, comme l'intégration de modèles plus avancés ou l'exploration d'autres techniques de traitement de texte.
