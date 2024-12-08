@@ -66,6 +66,14 @@ Par la suite, nous avons implémenté un classifieur Bayesien en utilisant deux 
 
 Pour améliorer ce modèle, nous avons implémenté une variante basée sur la représentation par fréquence. Cette approche prend en compte non seulement la présence d’un mot, mais également le nombre de fois qu’il apparaît dans le tweet (sac de mots). Cela a nécessité une modification de l’équation pour inclure la fréquence de chaque mot, tout en conservant la logique générale du modèle Bayesien. Enfin, pour optimiser le classifieur, nous avons filtré les mots non significatifs, tels que les articles ou pronoms de moins de trois lettres, et expérimenté avec des n-grammes (bi-grammes et combinaisons uni-grammes + bi-grammes) afin de capturer des relations entre mots et d’améliorer les performances globales.
 
+Diagramme du package de la partie IA:
+
+![Diagramme du package de la partie IA](./assets/packages.png)
+
+Diagramme de classe de la partie IA:
+
+![Diagramme de classes de la partie IA](./assets/classes.png)
+
 ### Interface graphique
 
 The sentiment analysis application has user friendly GUI built with **PyQt6**. This interface allows users to easily interact with the system through various functionalities.
