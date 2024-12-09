@@ -12,8 +12,10 @@ Thibault Tisserand
 git clone https://gitlab-etu.fil.univ-lille.fr/thibault.tisserand.etu/pje.git
 cd pje
 
-# Install dependencies 
-pip install PyQt6 "fastapi[standard]" numpy tqdm seaborn pandas matplotlib scikit-learn
+# Install dependencies
+pip install -r requirements.txt
+# or 
+pip install PyQt6 "fastapi[standard]" numpy tqdm seaborn pandas matplotlib scikit-learn requests
 
 # Starting the api
 cd api/src/
