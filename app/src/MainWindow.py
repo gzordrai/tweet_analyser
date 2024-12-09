@@ -311,14 +311,16 @@ class MainWindow(QMainWindow):
                         cm_df = pd.DataFrame(data_json["cm"])
                     
                     QMessageBox.information(self, "Success", f"Model Accuracy : {accuracy}")
+
                     
                     if "data" in data_json:
                         new_df = pd.DataFrame(data_json["data"])
                         self.modified_data = new_df.copy()
                         self.populate_table(self.modified_data, "UnAnnotated Dataset", 0, 1)
                     
-                    conf_matrix = self.show_confusion_matrix_window(cm_df)
-                    self.save_results_to_json(classifier, param_label, model_param, accuracy, conf_matrix)
+                    if "cm" in data_json:
+                        conf_matrix = self.show_confusion_matrix_window(cm_df)
+                        self.save_results_to_json(classifier, param_label, model_param, accuracy, conf_matrix)
                 else:
                     self.show_error(f"Error: {response.status_code} - {response.text}")
         except Exception as e:
@@ -355,9 +357,7 @@ class MainWindow(QMainWindow):
 
 
     def show_pie_chart(self, df):
-
         df.iloc[:, 0] = df.iloc[:, 0].astype(str)
-
         sentiment_counts = df.iloc[:, 0].value_counts()
         print(sentiment_counts)
 
@@ -375,32 +375,33 @@ class MainWindow(QMainWindow):
 
         self.figure.clear()
 
+     
         ax = self.figure.add_subplot(111, aspect='equal')
+        self.figure.subplots_adjust(left=0, right=1, top=1, bottom=0) 
 
         total = sum(sizes)
-
         if total == 0:
-
             ax.text(
                 0.5, 0.5, 'No data available',
                 ha='center', va='center', transform=ax.transAxes,
                 fontsize=12
             )
         else:
-
             ax.pie(
                 sizes, labels=labels, autopct='%1.1f%%',
                 startangle=90, colors=["#FF5252", "#FFEB3B", "#4CAF50"]
             )
-            ax.axis('equal') 
+            ax.axis('equal')  
 
+        ax.set_facecolor("none")  
+        self.figure.patch.set_alpha(0) 
 
-        ax.set_facecolor("none")
-
+        self.canvas.setStyleSheet("background: transparent;") 
         self.canvas.setVisible(True)
         self.canvas.draw()
         self.position_pie_chart()
         self.show_stats_table()
+
   
 
         
@@ -412,13 +413,13 @@ class MainWindow(QMainWindow):
         window_rect = self.geometry()
         table_rect = self.tweet_table.geometry()
 
-        top_padding = 120
+        top_padding = 100
         right_padding = 0
-        left_padding = -50
+        left_padding = -10
         bottom_padding = 10
 
-        pie_width = int(table_rect.width() * 0.5)
-        pie_height = int(table_rect.height() * 0.5)
+        pie_width = int(table_rect.width() * 0.54)
+        pie_height = int(table_rect.height() * 0.54)
 
         available_space_bottom = window_rect.bottom() - pie_height - top_padding - bottom_padding
         available_space_right = window_rect.right() - pie_width - right_padding - left_padding
@@ -515,6 +516,7 @@ class MainWindow(QMainWindow):
                     return
                 data.sort(key=lambda x: x.get("training_date", ""), reverse=True)
                 top_entries = data[:5]
+                top_entries = data
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error reading JSON: {e}")
             return
@@ -554,10 +556,16 @@ class MainWindow(QMainWindow):
             cm_path = entry.get("confusion_matrix", "N/A") 
 
             cm_item = QTableWidgetItem(cm_path)
+            
+
+            font = QFont()
+            font.setBold(True)
+            cm_item.setFont(font)
+            cm_item.setForeground(QBrush(QColor("white")))
 
   
             if cm_path != "N/A":
-                cm_item.setForeground(QBrush(QColor("blue")))
+                cm_item.setForeground(QBrush(QColor("white")))
                 cm_item.setToolTip("Click to view confusion matrix image")
      
                 cm_item.setFlags(cm_item.flags() | Qt.ItemFlag.ItemIsSelectable | Qt.ItemFlag.ItemIsEnabled)
@@ -572,7 +580,7 @@ class MainWindow(QMainWindow):
                 if item != cm_item:
                     item.setForeground(QBrush(QColor("white")))
                 else:
-                    item.setForeground(QBrush(QColor("blue")))
+                    item.setForeground(QBrush(QColor("white")))
 
             self.stats_table.setItem(i, 0, alg_item)
             self.stats_table.setItem(i, 1, param_label_item)
@@ -583,6 +591,13 @@ class MainWindow(QMainWindow):
         self.stats_table.resizeColumnsToContents()
         self.stats_table.verticalHeader().setDefaultSectionSize(50)
         self.stats_table.horizontalHeader().setDefaultSectionSize(140)  
+        
+        self.stats_table.setColumnWidth(0, 120)
+        self.stats_table.setColumnWidth(1, 120)
+        self.stats_table.setColumnWidth(2, 80)
+        self.stats_table.setColumnWidth(3, 70)
+        self.stats_table.setColumnWidth(4, 200)
+        
 
         self.stats_table.setSortingEnabled(True)
 
@@ -625,14 +640,14 @@ class MainWindow(QMainWindow):
         table_rect = self.tweet_table.geometry() 
 
 
-        stats_width = 680
+        stats_width = 620
         stats_height = 250
 
   
-        left_padding = 500  
+        left_padding = 820  
         top_padding = 220
         right_padding = 120
-        bottom_padding = 20
+        bottom_padding = 60
 
        
         stats_x = pie_rect.x() + left_padding
@@ -657,32 +672,6 @@ class MainWindow(QMainWindow):
 
         self.stats_table.setGeometry(QRect(stats_x, stats_y, stats_width, stats_height))
         self.stats_table.setVisible(True)
-
-
-
-
-
-
-
-
-# class ConfusionMatrixWindow(QDialog):
-#     def __init__(self, parent=None):
-#         super().__init__(parent)
-#         self.setWindowTitle("Confusion Matrix")
-#         self.setMinimumSize(600, 400)
-
-#         self.layout = QVBoxLayout(self)
-#         self.figure = plt.Figure(figsize=(5,4), tight_layout=True)
-#         self.canvas = FigureCanvas(self.figure)
-#         self.layout.addWidget(self.canvas)
-
-#     def show_confusion_matrix(self, conf_matrix, labels):
-#         self.figure.clear()
-#         ax_cm = self.figure.add_subplot(111)
-#         sns.heatmap(conf_matrix, annot=True, fmt='d', cmap='Blues', xticklabels=labels, yticklabels=labels, ax=ax_cm)
-#         ax_cm.set_title("Confusion Matrix")
-#         self.figure.tight_layout()
-#         self.canvas.draw()
 
 
 
@@ -763,13 +752,11 @@ class ConfusionMatrixImageWindow(QDialog):
 
         layout = QVBoxLayout(self)
 
-        # Check if the image exists
         if not os.path.exists(image_path):
             error_label = QLabel(f"Image not found at {image_path}.")
             layout.addWidget(error_label)
             return
 
-        # Load and display the image
         pixmap = QPixmap(image_path)
         if pixmap.isNull():
             error_label = QLabel(f"Failed to load image from {image_path}.")
@@ -777,7 +764,6 @@ class ConfusionMatrixImageWindow(QDialog):
             return
 
         image_label = QLabel(self)
-        # Adjust the scaling method for PyQt6
         image_label.setPixmap(
             pixmap.scaled(
                 self.size(), 

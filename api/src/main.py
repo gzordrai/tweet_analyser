@@ -65,7 +65,6 @@ class PreprocessAPI():
             dataset = UnannotateDataset(file_path, self.classifiers[classifier], annotateddataset)
             accuracy = self.get_accuracy(annotateddataset, classifier, value)
             tmp, self._df = dataset.classify()
-            
             return accuracy, self._df
         else:
             raise HTTPException(status_code=400, detail="Invalid API call type")
@@ -75,9 +74,7 @@ async def upload_file_for_training(file: UploadFile = File(...), classifier: str
     api = PreprocessAPI(value)
     temp_file_path = api.upload_file(file, temp_path)
     result, cm_df = api.process_file(temp_file_path, "annotated", classifier, value)
-    print(cm_df)
     data = cm_df.to_dict(orient='records')
-
     return {"accuracy": result, "cm": data}
 
 @app.post("/dataset/unannotated")
@@ -86,5 +83,5 @@ async def upload_file_for_testing(file: UploadFile = File(...), classifier: str 
     temp_file_path = api.upload_file(file, temp_path)
     result, df = api.process_file(temp_file_path, "unannotated", classifier, value)
     data = df.to_dict(orient='records')
-
+    
     return {"accuracy": result, "data" : data}
