@@ -19,7 +19,7 @@ pip install PyQt6 "fastapi[standard]" numpy tqdm seaborn pandas matplotlib sciki
 
 # Starting the api
 cd api/src/
-uvicorn.exe main:app --host localhost --port 8000
+uvicorn main:app --host localhost --port 8000
 
 # Starting the application
 cd app/src/
