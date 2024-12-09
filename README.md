@@ -103,6 +103,11 @@ The sentiment analysis application has user friendly GUI built with **PyQt6**. T
 - **Model Training History**
   - Maintain a history of the model trainings, including model names, hyperparameters, confusion matrix images and accuracy, stored in a json file.
 
+User Interface (UI)
+
+![UI Diagram](./assets/UI.png)
+
+
 ## Résultats de la classification avec les différentes méthodes et analyse
 
 Les résultats présentés dans les matrices de confusion ci-dessous illustrent les performances des algorithmes de classification implémentés dans le projet.
